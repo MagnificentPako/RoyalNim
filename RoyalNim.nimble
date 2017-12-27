@@ -13,3 +13,5 @@ skipExt       = @["nim"]
 requires "nim >= 0.17.2"
 requires "nimquery >= 1.0.2"
 requires "docopt"
+requires "colorize"
+requires "zip"

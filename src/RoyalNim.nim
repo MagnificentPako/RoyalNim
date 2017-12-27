@@ -8,14 +8,18 @@ import httpclient
      , streams
      , re
      , os
+     , options
+     , "./private/provider"
+     , "./private/royalroad"
+     , "./private/webnovel"
 
 
 const doc = """
 RoyalNim
 
 Usage:
-    RoyalNim chapter <id>
-    RoyalNim fiction <id>
+    RoyalNim royalroad <id>
+    RoyalNim webnovel.com <id>
 
 Options:
     - --help    Show this screen.
@@ -80,67 +84,35 @@ const chapterTemplate = """
 </div>
 """
 
-type Chapter = tuple
-    title: string
-    content: string
-    id: string
-
-type Fiction = tuple
-    title: string
-    author: string
-    chapters: seq[Chapter]
-
-proc getChapter(id: string): Chapter =
-    let client = newHttpClient()
-    let url = "http://royalroadl.com/fiction/chapter/$1".format(id)
-    let xml = parseHtml( newStringStream(client.getContent(url)))
-    let chapter_content = xml.querySelector(".chapter-content")
-    let chapter_title   = xml.querySelector("div .col-md-5 > h1")
-    echo "Downloaded chapter \"$1\"" % chapter_title.innerText()
-    httpclient.close(client)
-    result = (title: chapter_title.innerText(), content: $chapter_content, id: id)
-
-proc getFiction(id: string): Fiction =
-    let client = newHttpClient()
-    let url = "http://royalroadl.com/fiction/$1".format(id)
-    let xml = parseHtml(newStringStream(client.getContent(url)))
-    let author = xml.querySelector("span[property='name']").innerText()
-    let title  = xml.querySelector("h1[property='name']").innerText()
-    echo "Downloading \"$1\" by \"$2\"" % [title, author]
-    let chapters = xml.querySelectorAll("tbody > tr").map(proc(a: XmlNode): string = 
-        var matches: array[1, string]
-        let curl = a.attr "data-url"
-
-        if curl.match(re"^/fiction/.+/.+/chapter/(.+)/.+$", matches, 0):
-            result = matches[0]
-        else:
-            result = ""
-    )
-    httpclient.close(client)
-    result = ( title: title
-             , author: author
-             , chapters: chapters.map(proc(a: string): Chapter = getChapter(a))
-             )
-
 proc main() =
-    let args    = docopt(doc, version = "RoyalNim 0.1")
-    if args["chapter"]:
-        echo "no"
+    let args = docopt(doc, version = "RoyalNim 0.1")
     
-    if args["fiction"]:
-        let fiction = getFiction("$1".format(args["<id>"]))
-        createDir(fiction.title)
-        setCurrentDir(fiction.title)
+    var fictionO: Option[Fiction] = none(Fiction)
+
+    if args["royalroad"]:
+        let provider = RoyalRoadL()
+        fictionO = some(provider.getFiction("$1".format(args["<id>"])))
+    elif args["webnovel.com"]:
+        let provider = newWebnovelCom()
+        fictionO = some(provider.getFiction("$1".format(args["<id>"])))
+        
+    try:
+        let fiction = fictionO.get()
+        createDir(fiction.info.title)
+        setCurrentDir(fiction.info.title)
         var chapterOut = ""
         for chapter in fiction.chapters:
             chapterOut &= chapterTemplate.format(chapter.title, chapter.content)
         chapterOut = chapterOut.replace("nbsp&", " ").replace("amp;", " ")
         let handle = open("raw.html", fmWrite)
-        write(handle, htmlTemplate.format(fiction.title, fiction.author, chapterOut))
+        write(handle, htmlTemplate.format(fiction.info.title, fiction.info.author, chapterOut))
         close(handle)
-        discard execShellCmd("wkhtmltopdf $2 raw.html \"$1.pdf\"".format( fiction.title
+        discard execShellCmd("wkhtmltopdf $2 raw.html \"$1.pdf\"".format( fiction.info.title
                                                                , "-B 0 -L 0 -R 0 -T 0 --no-outline"
                                                                ))
         echo "Done."
+    except:
+        echo "FUCK YOU"
+        discard
 
 main()
