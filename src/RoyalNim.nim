@@ -12,6 +12,7 @@ import httpclient
      , "./private/provider"
      , "./private/royalroad"
      , "./private/webnovel"
+     , "./private/fanfictionnet"
      , "./private/epub"
 
 
@@ -21,6 +22,7 @@ RoyalNim
 Usage:
     RoyalNim royalroad <id>
     RoyalNim webnovel.com <id>
+    RoyalNim fanfiction.net <id>
 
 Options:
     - --help    Show this screen.
@@ -38,6 +40,9 @@ proc main() =
         fictionO = some(provider.getFiction("$1".format(args["<id>"])))
     elif args["webnovel.com"]:
         let provider = newWebnovelCom()
+        fictionO = some(provider.getFiction("$1".format(args["<id>"])))
+    elif args["fanfiction.net"]:
+        let provider = FanfictionNet()
         fictionO = some(provider.getFiction("$1".format(args["<id>"])))
         
     try:

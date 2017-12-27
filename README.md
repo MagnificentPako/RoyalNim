@@ -18,12 +18,16 @@ RoyalNim royalroad 8894
 
 # Will download "Release That Witch" from Webnovel.com
 RoyalNim webnovel.com 7931338406001705
+
+# Will download "From Outside Eyes" from fanfiction.nmet
+RoyalNim fanfiction.net 12660656
 ```
 
 # Supported sites
 
 - RoyalRoadL
 - webnovel.com
+- fanfiction.net
 
 # Contribution
 Sure, but don't hate me for
