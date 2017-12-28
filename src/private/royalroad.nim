@@ -1,4 +1,12 @@
-import httpclient, ./provider, xmltree, htmlparser, streams, strutils, nimquery, sequtils, re
+import httpclient
+     , ./provider
+     , xmltree
+     , htmlparser
+     , streams
+     , strutils
+     , nimquery
+     , sequtils
+     , re
 
 type 
     RoyalRoadL* = ref object of Provider

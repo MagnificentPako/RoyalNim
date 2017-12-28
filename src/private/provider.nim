@@ -1,4 +1,5 @@
-import colorize, strutils
+import colorize
+     , strutils
 
 type Chapter* = tuple
     title: string

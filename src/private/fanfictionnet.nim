@@ -1,4 +1,12 @@
-import httpclient, ./provider, xmltree, htmlparser, streams, strutils, nimquery, sequtils, re
+import httpclient
+     , ./provider
+     , xmltree
+     , htmlparser
+     , streams
+     , strutils
+     , nimquery
+     , sequtils
+     , re
 
 const fanficUrl  = "https://www.fanfiction.net/s/$1"
 const chapterUrl = "https://www.fanfiction.net/s/$1/$2" 

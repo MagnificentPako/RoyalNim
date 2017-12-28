@@ -1,4 +1,14 @@
-import zip/zipfiles, os, osproc, streams, xmltree, strtabs, nuuid, times, strutils, sequtils, ./provider
+import zip/zipfiles
+     , os
+     , osproc
+     , streams
+     , xmltree
+     , strtabs
+     , nuuid
+     , times
+     , strutils
+     , sequtils
+     , ./provider
 
 const css = """
 
