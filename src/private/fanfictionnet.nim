@@ -13,6 +13,17 @@ const chapterUrl = "https://www.fanfiction.net/s/$1/$2"
 
 type FanfictionNet* = ref object of Provider
 
+method getFictionInfo*(this: FanfictionNet, fictionId: string): FictionInfo =
+    let client = newHttpClient()
+    defer: close(client)
+    let mainContent = client.getContent(fanficUrl % [fictionId])
+    let mainDoc = parseHtml(newStringStream(mainContent))
+    let title = mainDoc.querySelector("#profile_top > b").innerText()
+    let author = mainDoc.querySelector("#profile_top > a").innerText()
+    let fictionInfo: FictionInfo = (title: title, author: author, chapters: @[])
+    this.onFiction(fictionInfo)
+    result = fictionInfo
+
 method getChapter*(this: FanfictionNet, fictionId: string, chapterId: string): Chapter =
     let client = newHttpClient()
     defer: close(client)
@@ -31,19 +42,12 @@ method getChapter*(this: FanfictionNet, fictionId: string, chapterId: string): C
         result = (title: "", content: "", id: "")
 
 method getFiction*(this: FanfictionNet, fictionId: string): Fiction =
-        let client = newHttpClient()
-        defer: close(client)
-        let mainContent = client.getContent(fanficUrl % [fictionId])
-        let mainDoc = parseHtml(newStringStream(mainContent))
-        let title = mainDoc.querySelector("#profile_top > b").innerText()
-        let author = mainDoc.querySelector("#profile_top > a").innerText()
-        let fictionInfo = (title: title, author: author)
-        this.onFiction(fictionInfo)
-        var chapters: seq[Chapter] = @[]
-        var chapId = 1
-        var chap = this.getChapter(fictionId, "1")
-        while(chap.content != ""):
-            chapters.add(chap)
-            chap = this.getChapter(fictionId, intToStr(chapId))
-            chapId += 1
-        return (info: fictionInfo, chapters: chapters)
+    let info = this.getFictionInfo(fictionId)
+    var chapters: seq[Chapter] = @[]
+    var chapId = 1
+    var chap = this.getChapter(fictionId, "1")
+    while(chap.content != ""):
+        chapters.add(chap)
+        chap = this.getChapter(fictionId, intToStr(chapId))
+        chapId += 1
+    return (info: info, chapters: chapters)

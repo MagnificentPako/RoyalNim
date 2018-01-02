@@ -14,6 +14,7 @@ import httpclient
      , "./private/webnovel"
      , "./private/fanfictionnet"
      , "./private/epub"
+     , "./private/server"
 
 
 const doc = """
@@ -23,16 +24,14 @@ Usage:
     RoyalNim royalroad <id>
     RoyalNim webnovel.com <id>
     RoyalNim fanfiction.net <id>
+    RoyalNim serve
 
 Options:
     - --help    Show this screen.
-    --version   Show version
+    --version   Show version.
 """
 
-
-proc main() =
-    let args = docopt(doc, version = "RoyalNim 0.1")
-    
+proc handleScrape(args: auto) =
     var fictionO: Option[Fiction] = none(Fiction)
 
     if args["royalroad"]:
@@ -55,5 +54,13 @@ proc main() =
     except:
         echo "FUCK YOU"
         discard
+
+proc main() =
+    let args = docopt(doc, version = "RoyalNim 0.1")
+    
+    if args["serve"]:
+        startServer()
+    else:
+        handleScrape(args)
 
 main()

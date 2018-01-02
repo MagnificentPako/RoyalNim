@@ -29,6 +29,20 @@ proc newWebnovelCom*(): WebnovelCom =
     let cookies = parseCookies(res.headers.table["set-cookie"].foldl(a & "\n" & b))
     result.csrf = cookies["_csrfToken"]
 
+method getFictionInfo*(this: WebnovelCom, bookId: string): FictionInfo =
+    let client = newHttpClient()
+    defer: client.close()
+    let data = parseJson(client.getContent(chapterUrl % [this.csrf, bookId]))
+
+    let chapters = data["data"]["chapterItems"].getElems()
+    let title = data["data"]["bookInfo"]["bookName"].getStr()
+    let author = parseJson(client.getContent(contentUrl % [this.csrf, bookId, chapters[0]["chapterId"].getStr()]))["data"]["bookInfo"]["authorName"].getStr()
+
+    let fictionInfo = (title: title, author: author, chapters: chapters.map(proc(a: auto): string = a["chapterId"].getStr()))
+
+    this.onFiction(fictionInfo)
+    result = fictionInfo
+
 method getChapter*(this: WebnovelCom, bookId: string, chapterId: string): Chapter =
     let client = newHttpClient()
     let data = parseJson(client.getContent(contentUrl % [this.csrf, bookId, chapterId]))
@@ -46,17 +60,8 @@ method getChapter*(this: WebnovelCom, bookId: string, chapterId: string): Chapte
     result = chapter
 
 method getFiction*(this: WebnovelCom, bookId: string): Fiction = 
-    let client = newHttpClient()
-    let data = parseJson(client.getContent(chapterUrl % [this.csrf, bookId]))
+    let info = this.getFictionInfo(bookId)
 
-    let chapters = data["data"]["chapterItems"].getElems()
-    let title = data["data"]["bookInfo"]["bookName"].getStr()
-    let author = parseJson(client.getContent(contentUrl % [this.csrf, bookId, chapters[0]["chapterId"].getStr()]))["data"]["bookInfo"]["authorName"].getStr()
-
-    let fictionInfo = (title: title, author: author)
-
-    this.onFiction(fictionInfo)
-
-    result = (info: fictionInfo, chapters: chapters.map( proc(a: auto): Chapter =
-        result = this.getChapter(bookId, a["chapterId"].getStr())    
+    result = (info: info, chapters: info.chapters.map( proc(a: auto): Chapter =
+        result = this.getChapter(bookId, a)    
     ))
